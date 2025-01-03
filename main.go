@@ -17,6 +17,7 @@ func main() {
 	// }
 
 	fmt.Print("\033[H\033[2J")
+	fmt.Print("\x1b[?25l")
 	for {
 		width, height, err := term.GetSize(0)
 		if err != nil {
@@ -59,4 +60,6 @@ func main() {
 		}
 		time.Sleep(1 * time.Second)
 	}
+	// restore cursor
+	fmt.Print("\x1b[?25h")
 }
