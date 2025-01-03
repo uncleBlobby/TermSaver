@@ -30,6 +30,36 @@ type Ball struct {
 	History  []Vector2
 }
 
+func (b *Ball) Update(ts *TermSaver) {
+	b.History = append(b.History, Vector2{X: b.X, Y: b.Y})
+
+	b.X += b.Velocity.X
+	b.Y += b.Velocity.Y
+
+	if b.X >= ts.Width-3 || b.X <= 1 {
+		b.Velocity.X *= -1
+	}
+	if b.Y >= ts.Height-3 || b.Y <= 1 {
+		b.Velocity.Y *= -1
+	}
+
+	b.History = append(b.History, Vector2{X: b.X, Y: b.Y})
+
+	if len(b.History) > 10 {
+		b.History = b.History[len(b.History)-10:]
+	}
+
+	for ind, historyDraw := range b.History {
+		if ind == len(b.History)-1 {
+			ts.Saver[historyDraw.Y][historyDraw.X] = "O"
+		} else if ind > 2 {
+			ts.Saver[historyDraw.Y][historyDraw.X] = "o"
+		} else {
+			ts.Saver[historyDraw.Y][historyDraw.X] = "."
+		}
+	}
+}
+
 func Init() *TermSaver {
 	ts := &TermSaver{}
 	ts.InitInterrupts()
@@ -82,33 +112,7 @@ func (ts *TermSaver) Draw(b *Ball) {
 		}
 
 		ts.Saver[b.Y][b.X] = b.Char
-		b.History = append(b.History, Vector2{X: b.X, Y: b.Y})
-
-		b.X += b.Velocity.X
-		b.Y += b.Velocity.Y
-
-		if b.X >= ts.Width-3 || b.X <= 1 {
-			b.Velocity.X *= -1
-		}
-		if b.Y >= ts.Height-3 || b.Y <= 1 {
-			b.Velocity.Y *= -1
-		}
-
-		b.History = append(b.History, Vector2{X: b.X, Y: b.Y})
-
-		if len(b.History) > 10 {
-			b.History = b.History[len(b.History)-10:]
-		}
-
-		for ind, historyDraw := range b.History {
-			if ind == len(b.History)-1 {
-				ts.Saver[historyDraw.Y][historyDraw.X] = "O"
-			} else if ind > 2 {
-				ts.Saver[historyDraw.Y][historyDraw.X] = "o"
-			} else {
-				ts.Saver[historyDraw.Y][historyDraw.X] = "."
-			}
-		}
+		b.Update(ts)
 
 		for i := 0; i < len(ts.Saver); i++ {
 			for j := 0; j < len(ts.Saver[i]); j++ {
@@ -141,11 +145,6 @@ func main() {
 	fmt.Print("\033[H\033[2J")
 	// hide cursor while termsaver is running
 	fmt.Print("\x1b[?25l")
-
-	// initialize channel for listening to terminal interrupt signal
-	// TODO: listen for
-	// sigs := make(chan os.Signal, 1)
-	// signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	// initialize goroutine listener for signal event, which is discarded before redrawing cursor and exiting
 	go func() {
