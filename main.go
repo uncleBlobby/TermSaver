@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"os/signal"
 	"syscall"
 	"time"
@@ -73,8 +74,16 @@ func (ts *TermSaver) Draw() {
 			}
 			fmt.Printf("\n")
 		}
-		time.Sleep(1 * time.Second)
+		time.Sleep(1000 * time.Millisecond)
+		ts.ClearScreen()
 	}
+}
+
+func (ts *TermSaver) ClearScreen() {
+	// fmt.Print("\033[H\033[2J")
+	cmd := exec.Command("clear")
+	cmd.Stdout = os.Stdout
+	cmd.Run()
 }
 
 func main() {
@@ -102,46 +111,4 @@ func main() {
 
 	// main application loop
 	ts.Draw()
-	// 	for {
-	// 		// get dimensions of terminal window
-	// 		// runs each update for hot - resizing ie: terminal can be resized and screensaver will update to the new dimensions
-	// 		width, height, err := term.GetSize(0)
-	// 		if err != nil {
-	// 			log.Printf("Error: %s", err)
-	// 			os.Exit(1)
-	// 		}
-
-	// 		// make 2d array of chars for screen drawing
-	// 		saver := [][]string{}
-
-	// 		for i := 0; i < height-1; i++ {
-	// 			row := make([]string, width)
-	// 			if i == 0 || i == height-2 {
-	// 				for j := 0; j < len(row)-1; j++ {
-	// 					row[j] = "="
-	// 				}
-	// 			} else {
-	// 				for j := 0; j < len(row)-1; j++ {
-	// 					if j == 0 {
-	// 						row[j] = "|"
-	// 					} else if j == width-2 {
-	// 						row[j] = "|"
-	// 					} else {
-	// 						row[j] = " "
-	// 					}
-	// 				}
-	// 				// row[0] = "="
-	// 				// row[width-1] = "^"
-	// 			}
-	// 			saver = append(saver, row)
-	// 		}
-
-	// 		for i := 0; i < len(saver); i++ {
-	// 			for j := 0; j < len(saver[i]); j++ {
-	// 				fmt.Printf("%s", saver[i][j])
-	// 			}
-	// 			fmt.Printf("\n")
-	// 		}
-	// 		time.Sleep(1 * time.Second)
-	// 	}
 }
