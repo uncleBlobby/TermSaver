@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"golang.org/x/term"
@@ -18,6 +20,21 @@ func main() {
 
 	fmt.Print("\033[H\033[2J")
 	fmt.Print("\x1b[?25l")
+
+	sigs := make(chan os.Signal, 1)
+
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	// done := make(chan bool, 1)
+
+	go func() {
+		_ = <-sigs
+		// fmt.Println()
+		// fmt.Println(sig)
+		fmt.Print("\x1b[?25h")
+		os.Exit(1)
+	}()
+
 	for {
 		width, height, err := term.GetSize(0)
 		if err != nil {
