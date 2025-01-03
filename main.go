@@ -137,25 +137,31 @@ func (ts *TermSaver) ClearScreen() {
 	// cmd.Run()
 }
 
-func main() {
+func (ts *TermSaver) Interrupt() {
+	_ = <-ts.Interrupts
+	fmt.Print("\x1b[?25h")
+	ts.ClearScreen()
+	os.Exit(0)
+}
 
-	ts := Init()
-
+func Start() *TermSaver {
 	// clear terminal before running termsaver
 	fmt.Print("\033[H\033[2J")
 	// hide cursor while termsaver is running
 	fmt.Print("\x1b[?25l")
 
-	// initialize goroutine listener for signal event, which is discarded before redrawing cursor and exiting
-	go func() {
-		_ = <-ts.Interrupts
-		// fmt.Println()
-		// fmt.Println(sig)
-		ts.ClearScreen()
-		fmt.Print("\x1b[?25h")
-		os.Exit(1)
-	}()
+	return Init()
+}
 
+func main() {
+
+	ts := Start()
+
+	// initialize goroutine listener for signal event, which is discarded before redrawing cursor and exiting
+	go ts.Interrupt()
+
+	// initialize BALL
+	// TODO: refactor into method, randomize starting position and velocity
 	b := Ball{
 		X: 5, Y: 5, Char: "O", Velocity: Vector2{X: 1, Y: 1},
 	}
