@@ -11,22 +11,25 @@ import (
 	"golang.org/x/term"
 )
 
-func main() {
-	// if term.IsTerminal(0) {
-	// 	fmt.Println("in a term")
-	// } else {
-	// 	fmt.Println("not a term")
-	// }
+type TermSaver struct {
+	Width, Height int
+	Saver         [][]string
+	Interrupts    chan os.Signal
+}
 
+func main() {
+
+	// clear terminal before running termsaver
 	fmt.Print("\033[H\033[2J")
+	// hide cursor while termsaver is running
 	fmt.Print("\x1b[?25l")
 
+	// initialize channel for listening to terminal interrupt signal
+	// TODO: listen for
 	sigs := make(chan os.Signal, 1)
-
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-	// done := make(chan bool, 1)
-
+	// initialize goroutine listener for signal event, which is discarded before redrawing cursor and exiting
 	go func() {
 		_ = <-sigs
 		// fmt.Println()
@@ -35,16 +38,17 @@ func main() {
 		os.Exit(1)
 	}()
 
+	// main application loop
 	for {
+		// get dimensions of terminal window
+		// runs each update for hot - resizing ie: terminal can be resized and screensaver will update to the new dimensions
 		width, height, err := term.GetSize(0)
 		if err != nil {
 			log.Printf("Error: %s", err)
 			os.Exit(1)
 		}
-		// fmt.Printf("width: %d, height: %d", width, height)
 
 		// make 2d array of chars for screen drawing
-
 		saver := [][]string{}
 
 		for i := 0; i < height-1; i++ {
@@ -77,6 +81,4 @@ func main() {
 		}
 		time.Sleep(1 * time.Second)
 	}
-	// restore cursor
-	fmt.Print("\x1b[?25h")
 }
