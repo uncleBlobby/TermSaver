@@ -27,6 +27,7 @@ type Ball struct {
 	Y        int
 	Char     string
 	Velocity Vector2
+	History  []Vector2
 }
 
 func Init() *TermSaver {
@@ -81,6 +82,8 @@ func (ts *TermSaver) Draw(b *Ball) {
 		}
 
 		ts.Saver[b.Y][b.X] = b.Char
+		b.History = append(b.History, Vector2{X: b.X, Y: b.Y})
+
 		b.X += b.Velocity.X
 		b.Y += b.Velocity.Y
 
@@ -89,6 +92,22 @@ func (ts *TermSaver) Draw(b *Ball) {
 		}
 		if b.Y >= ts.Height-3 || b.Y <= 1 {
 			b.Velocity.Y *= -1
+		}
+
+		b.History = append(b.History, Vector2{X: b.X, Y: b.Y})
+
+		if len(b.History) > 10 {
+			b.History = b.History[len(b.History)-10:]
+		}
+
+		for ind, historyDraw := range b.History {
+			if ind == len(b.History)-1 {
+				ts.Saver[historyDraw.Y][historyDraw.X] = "O"
+			} else if ind > 2 {
+				ts.Saver[historyDraw.Y][historyDraw.X] = "o"
+			} else {
+				ts.Saver[historyDraw.Y][historyDraw.X] = "."
+			}
 		}
 
 		for i := 0; i < len(ts.Saver); i++ {
@@ -101,7 +120,7 @@ func (ts *TermSaver) Draw(b *Ball) {
 			}
 			fmt.Printf("\n")
 		}
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(16 * time.Millisecond)
 		ts.ClearScreen()
 	}
 }
@@ -133,6 +152,7 @@ func main() {
 		_ = <-ts.Interrupts
 		// fmt.Println()
 		// fmt.Println(sig)
+		ts.ClearScreen()
 		fmt.Print("\x1b[?25h")
 		os.Exit(1)
 	}()
