@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"os/signal"
 	"syscall"
 	"time"
@@ -16,6 +15,18 @@ type TermSaver struct {
 	Width, Height int
 	Saver         [][]string
 	Interrupts    chan os.Signal
+}
+
+type Vector2 struct {
+	X int
+	Y int
+}
+
+type Ball struct {
+	X        int
+	Y        int
+	Char     string
+	Velocity Vector2
 }
 
 func Init() *TermSaver {
@@ -44,9 +55,10 @@ func (ts *TermSaver) InitDrawing() {
 	ts.Saver = [][]string{}
 }
 
-func (ts *TermSaver) Draw() {
+func (ts *TermSaver) Draw(b *Ball) {
 	for {
 		ts.SetSize()
+		ts.InitDrawing()
 
 		for i := 0; i < ts.Height-1; i++ {
 			row := make([]string, ts.Width)
@@ -68,22 +80,38 @@ func (ts *TermSaver) Draw() {
 			ts.Saver = append(ts.Saver, row)
 		}
 
+		ts.Saver[b.Y][b.X] = b.Char
+		b.X += b.Velocity.X
+		b.Y += b.Velocity.Y
+
+		if b.X >= ts.Width-3 || b.X <= 1 {
+			b.Velocity.X *= -1
+		}
+		if b.Y >= ts.Height-3 || b.Y <= 1 {
+			b.Velocity.Y *= -1
+		}
+
 		for i := 0; i < len(ts.Saver); i++ {
 			for j := 0; j < len(ts.Saver[i]); j++ {
+				// if j == b.X && i == b.Y {
+				// 	fmt.Printf("%s", b.Char)
+				// } else {
 				fmt.Printf("%s", ts.Saver[i][j])
+				// }
 			}
 			fmt.Printf("\n")
 		}
-		time.Sleep(1000 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
 		ts.ClearScreen()
 	}
 }
 
 func (ts *TermSaver) ClearScreen() {
 	// fmt.Print("\033[H\033[2J")
-	cmd := exec.Command("clear")
-	cmd.Stdout = os.Stdout
-	cmd.Run()
+	fmt.Print("\033[H")
+	// cmd := exec.Command("tput reset")
+	// cmd.Stdout = os.Stdout
+	// cmd.Run()
 }
 
 func main() {
@@ -109,6 +137,9 @@ func main() {
 		os.Exit(1)
 	}()
 
+	b := Ball{
+		X: 5, Y: 5, Char: "O", Velocity: Vector2{X: 1, Y: 1},
+	}
 	// main application loop
-	ts.Draw()
+	ts.Draw(&b)
 }
